@@ -1,0 +1,5 @@
+Hello,
+
+this package requires gmime 2, tested with 2.2.4
+**************
+I don't know if -pthread shall be included by default in Makefile.am

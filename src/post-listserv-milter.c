@@ -14,11 +14,6 @@ struct privdata
   short reset;
 };
 
-char* LSV_send_command(char *hostname, unsigned short port, char *origin, 
-			    char *pw, char *command);
-
-#define MILTPRIV  ((struct privdata *) smfi_getpriv(ctx))
-
 //removes the non-address containing text from the parameter
 //see RFC 2822, sec 3.4 and 3.4.1
 //and leaves just the mails
@@ -58,7 +53,7 @@ static inline char* simplify_address(char *text) {
 
 sfsistat post_listserv_header(SMFICTX *ctx, char *headerf, char *headerv)
 {
-  struct privdata *priv = MILTPRIV;
+  struct privdata *priv = ((struct privdata *) smfi_getpriv(ctx));
   if (priv == NULL) {
     priv = malloc(sizeof *priv);
     priv->reset = 0;
@@ -91,7 +86,7 @@ sfsistat post_listserv_header(SMFICTX *ctx, char *headerf, char *headerv)
 
 sfsistat post_listserv_eom(SMFICTX *ctx)
 {
-  struct privdata *priv = MILTPRIV;
+  struct privdata *priv = ((struct privdata *) smfi_getpriv(ctx));
   if (priv->x_cc) {
     smfi_chgheader(ctx, "X-cc", 1, NULL);
     smfi_chgheader(ctx, "CC",   1, priv->x_cc);

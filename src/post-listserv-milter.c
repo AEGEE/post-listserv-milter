@@ -92,8 +92,8 @@ static sfsistat post_listserv_eom(SMFICTX *ctx)
   if (priv->reset) {
     smfi_chgheader(ctx, "To", 1, "<>");
   }
-  if (priv->reply_to) {
-    if (strchr( priv->reply_to, ',') != NULL) {//Reply-to contains , => check if one of the address in Reply-To is subscribed to the list
+  if (priv->reply_to
+      && strchr(priv->reply_to, ',') != NULL) {//Reply-to contains , => check if one of the address in Reply-To is subscribed to the list
     /*
      * listname is the name of the list
      * email is the email in the reply-to, which is checked for redundancy
@@ -168,7 +168,6 @@ static sfsistat post_listserv_eom(SMFICTX *ctx)
 	free(email);
 	fclose(file);
       }
-    }
   }
   if (priv->x_cc != NULL) free(priv->x_cc);
   if (priv->x_to != NULL) free(priv->x_to);

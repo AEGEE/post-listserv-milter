@@ -51,7 +51,7 @@ static inline char* simplify_address(char *text) {
   return strdup(text);
 }
 
-sfsistat post_listserv_header(SMFICTX *ctx, char *headerf, char *headerv)
+static sfsistat post_listserv_header(SMFICTX *ctx, char *headerf, char *headerv)
 {
   struct privdata *priv = ((struct privdata *) smfi_getpriv(ctx));
   if (priv == NULL) {
@@ -84,7 +84,7 @@ sfsistat post_listserv_header(SMFICTX *ctx, char *headerf, char *headerv)
   return SMFIS_CONTINUE;
 }
 
-sfsistat post_listserv_eom(SMFICTX *ctx)
+static sfsistat post_listserv_eom(SMFICTX *ctx)
 {
   struct privdata *priv = ((struct privdata *) smfi_getpriv(ctx));
   if (priv->x_cc) {

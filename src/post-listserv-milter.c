@@ -56,31 +56,25 @@ static sfsistat post_listserv_header(SMFICTX *ctx, char *headerf, char *headerv)
   struct privdata *priv = ((struct privdata *) smfi_getpriv(ctx));
   if (priv == NULL) {
     priv = malloc(sizeof *priv);
-    priv->reset = 0;
     if (priv == NULL) return SMFIS_TEMPFAIL;
+    priv->reset = 0;
     memset(priv, '\0', sizeof *priv);
     smfi_setpriv(ctx, priv);
   }
   if (!strcmp(headerf, "Reply-To")) {
     if (!priv->reply_to) free(priv->reply_to);
     priv->reply_to = simplify_address(headerv);
-  } else { //Reply-To
-    if (!strcmp(headerf, "Sender")) {
-      if (!priv->sender) free(priv->sender);
-      priv->sender = strdup(headerv);
-      if (strcasestr(headerv, "b08") != NULL) priv->reset = 1;
-    } else { //Sender
-      if (!strcmp(headerf, "X-To")) {
-	if (!priv->x_to) free(priv->x_to);
-	priv->x_to = strdup(headerv);
-      } else { //X-To
-	if (!strcmp(headerf, "X-cc")) {
-	  if (!priv->x_cc) free(priv->x_cc);
-	  priv->x_cc = strdup(headerv);
-	} //X-cc
-      } //X-To
-    } //Sender
-  } //Reply-To
+  } else if (!strcmp(headerf, "Sender")) {
+    if (!priv->sender) free(priv->sender);
+    priv->sender = strdup(headerv);
+    if (strcasestr(headerv, "b08") != NULL) priv->reset = 1;
+  } else if (!strcmp(headerf, "X-To")) {
+    if (!priv->x_to) free(priv->x_to);
+    priv->x_to = strdup(headerv);
+  } else if (!strcmp(headerf, "X-cc")) {
+    if (!priv->x_cc) free(priv->x_cc);
+    priv->x_cc = strdup(headerv);
+  }
   return SMFIS_CONTINUE;
 }
 
@@ -183,7 +177,7 @@ static sfsistat post_listserv_eom(SMFICTX *ctx)
   if (priv != NULL) free(priv);
   smfi_setpriv(ctx, NULL);
   return SMFIS_CONTINUE;
- }
+}
 
 static struct smfiDesc smfilter =
   {

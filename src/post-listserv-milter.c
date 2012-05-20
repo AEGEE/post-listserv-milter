@@ -1,4 +1,6 @@
 #include <libmilter/mfapi.h>
+#define __USE_GNU 1
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

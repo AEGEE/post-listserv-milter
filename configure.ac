@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.69)
-AC_INIT(post-listserv-milter, 1.0, dpa@aegee.org)
+AC_INIT(post-listserv-milter, 1.0.1, post-listserv-milter@aegee.org)
 AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_SRCDIR([src/post-listserv-milter.c])
 AC_CONFIG_HEADER([config.h])

@@ -80,6 +80,37 @@ static sfsistat post_listserv_header(SMFICTX *ctx, char *headerf, char *headerv)
   return SMFIS_CONTINUE;
 }
 
+//return 1 if email receives emails from mailing list defined in file,
+//or 0 if email does not receive emails from the mailing list (not subscribed
+//or with NOMAIL option)
+static inline int receives_from_list(FILE *file, char *email) {
+  char res[100];
+  fseek (file, 20, SEEK_SET);
+  while (fscanf (file, "%s", res) == 1)
+    if (!strcmp (res, "PW=")) break;
+  //after PW= come the actual subscribers
+  //email appearing before PW= could be an unsubscribed listowner
+  fscanf (file, "%s", res);
+  while (fscanf (file, "%s", res) == 1) {
+    int i = 0;
+    while(res[i])
+      res[i] = tolower (res[i++]);
+    if (!strcmp (res, email))
+      {
+	i = strlen (res);
+	while (res[i - 1]!='/' && res[i - 2]!='/')
+	  fscanf (file, "%s", res);
+	//check if the user is in NOMAIL mode
+	//this means that the sixth character & 0000 0100 = 0000 0100
+	if ((res[5] & 0x08) == 0)
+	  return 1;
+	else
+	  return 0;
+      }
+  }
+  return 0;
+}
+
 static sfsistat post_listserv_eom(SMFICTX *ctx)
 {
   struct privdata *priv = ((struct privdata *) smfi_getpriv(ctx));
@@ -146,27 +177,8 @@ static sfsistat post_listserv_eom(SMFICTX *ctx)
 	i = 0;
 	while(email[i])
 	  email[i] = tolower(email[i++]);
-	fseek(file, 20, SEEK_SET);
-	while ( fscanf( file, "%s", res) == 1)
-	  if (!strcmp(res, "PW=")) break;
-	//after PW= come the actual subscribers
-	//email appearing before PW= could be an unsubscribed listowner
-	fscanf(file, "%s", res);
-	while ( fscanf( file, "%s", res) == 1){
-	  i = 0;
-	  while(res[i]) 
-	    res[i] = tolower(res[i++]);
-	  if (!strcmp(res, email))
-	  {
-	    while (res[strlen(res)-1]!='/' && res[strlen(res) -2]!='/')
-	      fscanf( file, "%s", res);
-	    //check if the user is in NOMAIL mode
-	    //this means that the the sixth characted & 0000 0100 = 0000 0100
-	    if ((res[5] & 0x08) == 0)
-	      smfi_chgheader(ctx, "Reply-To",   1, strdup(priv->sender));
-	    break;
-	  }
-	}
+	if (receives_from_list (file, email))
+	  smfi_chgheader (ctx, "Reply-To", 1, strdup (priv->sender));
 	free(email);
 	fclose(file);
       }

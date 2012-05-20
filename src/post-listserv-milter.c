@@ -16,34 +16,36 @@ struct privdata
   short reset;
 };
 
-//removes the non-address containing text from the parameter
-//see RFC 2822, sec 3.4 and 3.4.1
-//and leaves just the mails
+// removes the non-address containing text from the parameter (see RFC
+// 2822, sec 3.4 and 3.4.1) and leaves just the mails
 static inline char* simplify_address(char *text) {
   printf("simplify address: '%s'->", text);
   int i = 0;
-  int within_comment = 0, within_quoted = 0, within_address = 0, is_escaped=0;
+  int within_comment = 0, within_quoted = 0;
   char *temp = text;
-  //first remove the comments
-  //this is text within ( and )
-  //"\" preceding a parenthesis leads to ignoring the parenthesis (rfc2822, 3.2.2. Quoted Characters)
-  //in this implementation comments may not nest, and contradicts to 3.2.3)
+  /*
+   * first remove the comments, this is text within ( and )
+   * "\" preceding a parenthesis leads to ignoring the parenthesis (rfc2822,
+   * section 3.2.2. Quoted Characters).  In this implementation comments
+   * may not nest, which contradicts to section 3.2.3
+   */
   while (temp[i] != 0) {
     //remove if the character escapes
     if (temp[i] == '\\') temp[i++] = temp[i+1] = ' ';
     switch (temp[i]){
-    case 10: temp[i] = ' '; break;
+    case 10:
     case 13: temp[i] = ' '; break;
     //check if temp[i] starts a comment
     case '(': within_comment++; break;
     case ')': within_comment--; break;
     case '"': if (!within_comment)
       //then it is is the name of the destination, but not the e-mail -> remove
-      within_quoted = !within_quoted; break;
+      within_quoted = !within_quoted;
+      break;
     }
 
-    if (within_comment || within_quoted) temp[i] = ' ';
-    if (temp[i] ==')' || temp[i] == '"') temp[i] = ' ';
+    if (within_comment || within_quoted
+      || temp[i] == ')' || temp[i] == '"') temp[i] = ' ';
     //groups are ignored
     i++;
   }

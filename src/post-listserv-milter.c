@@ -19,7 +19,6 @@ struct privdata
 // removes the non-address containing text from the parameter (see RFC
 // 2822, sec 3.4 and 3.4.1) and leaves just the mails
 static inline char* simplify_address(char *text) {
-  printf("simplify address: '%s'->", text);
   int i = 0;
   int within_comment = 0, within_quoted = 0;
   char *temp = text;
@@ -51,7 +50,6 @@ static inline char* simplify_address(char *text) {
   }
   //at this moment we have only comma-separated addresses
   //surround with < > not surrounded addresses
-  printf("-> '%s'", text);
   return strdup(text);
 }
 
@@ -95,13 +93,16 @@ static inline int receives_from_list(FILE *file, char *email) {
   fscanf (file, "%s", res);
   while (fscanf (file, "%s", res) == 1) {
     int i = 0;
-    while(res[i])
-      res[i] = tolower (res[i++]);
+    while(res[i]) {
+      res[i] = tolower (res[i]);
+      i++;
+    }
     if (!strcmp (res, email))
       {
-	i = strlen (res);
-	while (res[i - 1]!='/' && res[i - 2]!='/')
+	while (res[i - 1]!='/' && res[i - 2]!='/') {
 	  fscanf (file, "%s", res);
+	  i = strlen (res);
+	}
 	//check if the user is in NOMAIL mode
 	//this means that the sixth character & 0000 0100 = 0000 0100
 	if ((res[5] & 0x08) == 0)
@@ -132,40 +133,34 @@ static sfsistat post_listserv_eom(SMFICTX *ctx)
     /*
      * listname is the name of the list
      * email is the email in the reply-to, which is checked for redundancy
-     * result is first a temporary variable, and later the data contained in a list
      */
-      char *result, *temp = simplify_address(priv->sender);
-      strtok_r(temp, "<@>", &result);
-      char * listname=strtok_r(NULL, "<@>", &result);
+      char *listname = strchr(priv->sender, '<') + 1;
+      listname = strndupa (listname, strchr (listname, '@') - listname);
       int i = 0;
       while(listname[i])
 	listname[i] = tolower(listname[i++]);
       char res[100];
-      sprintf(res, "/home/listserv/home/%s.list", listname);
-      free(temp);
       FILE *file = fopen(res, "rb");
       if (file != NULL) {
-	temp = strdup(priv->reply_to);
-      //get now the sender from Reply-To: list, sender
-      //this is the second address, after the comma and the spaces
-	char *email = strdup(strchr(temp, ',')+1);
-	free(temp);
-      //remove the text before <em@il>
+	char *temp = strdupa (priv->reply_to);
+	//get now the sender from Reply-To: list, sender
+	//this is the second address, after the comma and the spaces
+	char *email = strdup (strchr(temp, ',')+1);
+	//remove the text before <em@il>
 	if (strchr(email, '<')!= NULL) {
 	  temp = strdup(strchr(email, '<'));
 	  free(email);
 	  email = temp;
 	}
+	//now email is either space space space <em@il>
+	//or just em@il
+	//or space space space em@il
 
-      //now email is either space space space <em@il>
-      //or just em@il
-      //or space space space em@il
-
-      //remove the spaces at the beginning
-	if (email[0]==' ' ) temp = strdup(strtok_r(email," ", &result));
+	//remove the spaces at the beginning
+	if (email[0]==' ' ) temp = strdup(strchr(email,' '));
 	else temp = strdup(email);
 	free(email);
-      //now temp starts either with < or with e-mail address
+	//now temp starts either with < or with e-mail address
 	if (temp[0]=='<')
 	  {
 	    email = strdup(temp +1);
@@ -174,8 +169,8 @@ static sfsistat post_listserv_eom(SMFICTX *ctx)
 	    temp = email;
 	  }
 	email = temp;
-      //put the end of the string at the place of the first space
-      //email contains now the second addr. in Reply-To
+	//put the end of the string at the place of the first space
+	//email contains now the second addr. in Reply-To
 	i = 0;
 	while(email[i])
 	  email[i] = tolower(email[i++]);
@@ -253,7 +248,6 @@ int main(int argc, char **argv)
     default:
       break;
     }
-  /*
   pid_t pid = fork();
   if (pid < 0)
     {
@@ -280,7 +274,6 @@ int main(int argc, char **argv)
     fprintf(stream, "%i\n", getpid());
     fclose(stream);
   }
-  */
   if (smfi_register(smfilter) == MI_FAILURE) {
       fprintf(stderr, "smfi_register failed, most probably not enough memory\n");
       return -3;
@@ -289,10 +282,8 @@ int main(int argc, char **argv)
     fprintf(stderr, "Socket %s could not be opened\n", optarg);
     return -2;
   }
-  /*
   close(STDIN_FILENO);
   close(STDOUT_FILENO);
   close(STDERR_FILENO);
-  */
   return smfi_main();
 }
